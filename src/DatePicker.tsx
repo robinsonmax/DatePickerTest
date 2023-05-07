@@ -6,18 +6,31 @@ import {
   ChevronRight,
   Clock,
 } from "react-bootstrap-icons";
+import MonthView from "./DatePicker/MonthView";
 
 enum States {
-  Month,
-  Year,
-  Decade,
+  Date,
   Time,
 }
 
-export default function DatePicker() {
-  const [state, setState] = useState<States>(States.Month);
+enum Views {
+  Month,
+  Year,
+  Decade,
+}
+
+export default function DatePicker({ defaultValue }: { defaultValue?: Date }) {
+  const [state, setState] = useState<States>(States.Date);
+  const [view, setView] = useState<Views>(Views.Month);
+  const [date, setDate] = useState<Date>(defaultValue || new Date());
 
   const isDateView = state !== States.Time;
+
+  let currentView;
+  switch (view) {
+    case Views.Month:
+      currentView = <MonthView date={date} setDate={setDate} />;
+  }
 
   return (
     <div className={styles.container}>
@@ -26,55 +39,7 @@ export default function DatePicker() {
           isDateView ? styles.expand : ""
         }`}
       >
-        <div className={styles.dateSection}>
-          <div>
-            <table>
-              <thead>
-                <tr>
-                  <th colSpan={7}>
-                    <Title text="May" />
-                  </th>
-                </tr>
-                <tr>
-                  <th>S</th>
-                  <th>M</th>
-                  <th>T</th>
-                  <th>W</th>
-                  <th>T</th>
-                  <th>F</th>
-                  <th>S</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>
-                    <button>30</button>
-                  </td>
-                </tr>
-                <tr>
-                  <td>
-                    <button>7</button>
-                  </td>
-                </tr>
-                <tr>
-                  <td>
-                    <button>14</button>
-                  </td>
-                </tr>
-                <tr>
-                  <td>
-                    <button>21</button>
-                  </td>
-                </tr>
-                <tr>
-                  <td>
-                    <button>28</button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <div className={styles.dateSection}>{currentView}</div>
       </div>
       <div
         className={`${styles.switch} ${isDateView ? styles.date : styles.time}`}
@@ -82,9 +47,13 @@ export default function DatePicker() {
         <button
           className="btn"
           onClick={() => {
-            setState((state) =>
-              state === States.Time ? States.Month : States.Time
-            );
+            setState((state) => {
+              if (state === States.Time) {
+                setView(Views.Month);
+                return States.Date;
+              }
+              return States.Time;
+            });
           }}
         >
           {state == States.Time ? <Calendar2Event /> : <Clock />}
@@ -105,7 +74,7 @@ export default function DatePicker() {
   );
 }
 
-const Title = ({ text }: { text: string }) => {
+export const DatePickerTitle = ({ text }: { text: string }) => {
   return (
     <div className={styles.tableTitle}>
       <button className={styles.icon}>
