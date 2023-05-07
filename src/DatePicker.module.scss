@@ -1,29 +1,91 @@
+$padding: 8px;
+$title-height: 36px;
+$transition-duration: 0.3s;
+
 .container {
   background: white;
-  color: black;
   width: 250px;
-  border-radius: 0.5rem;
   box-shadow: 0 0.5rem 1rem rgba(0 0 0 / 16%);
+  border-radius: 0.5rem;
+  overflow: hidden;
+  user-select: none;
+  cursor: default;
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    td,
+    th {
+      padding: 0;
+      width: 14.2857%;
+      text-align: center;
+    }
+    button {
+      background: transparent;
+      padding: 0;
+      border-radius: 4px;
+      cursor: pointer;
+      &:hover {
+        background: #eee;
+      }
+    }
+    td button {
+      aspect-ratio: 1 / 1;
+      width: 100%;
+    }
+  }
 }
 
 .sectionContainer {
   display: grid;
   grid-template-rows: 0fr;
-  transition: grid-template-rows 0.3s;
+  transition: grid-template-rows $transition-duration;
+  @media (prefers-reduced-motion) {
+    transition: none;
+  }
 
   &.expand {
     grid-template-rows: 1fr;
   }
 }
 
-.section {
+.dateSection,
+.timeSection {
   overflow: hidden;
+  & > div {
+    padding: $padding;
+  }
+}
+
+.dateSection > div {
+  padding-bottom: 0;
+}
+.timeSection > div {
+  padding-top: 0;
 }
 
 .switch {
-  padding: 1rem;
+  padding: $padding;
 
   button {
     width: 100%;
+  }
+}
+
+.tableTitle {
+  width: 100%;
+  display: flex;
+
+  & > * {
+    height: $title-height;
+  }
+  .icon {
+    aspect-ratio: 1 / 1;
+  }
+  .title {
+    flex-grow: 1;
+    font-weight: bold;
+    font-size: 1em;
+    margin-inline: $padding;
   }
 }
