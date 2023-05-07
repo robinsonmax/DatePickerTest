@@ -1,50 +1,95 @@
-import { MouseEventHandler, useContext } from "react";
-import { DatePickerTitle } from "../DatePicker";
+import { Dispatch, useContext } from "react";
+import {
+  DatePickerAction,
+  DatePickerHeader,
+  DatePickerState,
+} from "../DatePicker";
 import { LocaleContext } from "../LocaleContextComponent";
 import styles from "../DatePicker.module.scss";
 
 export default function MonthView({
-  date,
-  setDate,
+  state,
+  dispatch,
 }: {
-  date: Date;
-  setDate: (date: Date) => void;
+  state: DatePickerState;
+  dispatch: Dispatch<DatePickerAction>;
 }) {
   const locale = useContext(LocaleContext);
 
-  const monthName = date.toLocaleString(locale.toString(), { month: "long" });
+  const yearView = () => {
+    dispatch({
+      type: "yearView",
+    });
+  };
 
-  const firstDayOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
+  const changeMonth = (increment: number) => {
+    dispatch({
+      type: "setFocus",
+      date: new Date(
+        state.focusDate.getFullYear(),
+        state.focusDate.getMonth() + increment,
+        1
+      ),
+    });
+  };
+
+  const selectDate = (date: Date) => {
+    dispatch({
+      type: "selectDate",
+      date: date,
+    });
+  };
+
+  const monthName = state.focusDate.toLocaleString(locale.toString(), {
+    month: "long",
+  });
+
+  const firstDayOfMonth = new Date(
+    state.focusDate.getFullYear(),
+    state.focusDate.getMonth(),
+    1
+  );
   const calendarOffset = firstDayOfMonth.getDay();
 
   // A list of days at 1 week intervals, starting from the 1st of the month
+  // 1st, 8th, 15th, 22nd, 29th
   let anchors: Date[] = [];
   for (
     let index = 1;
     index <=
-    DaysInMonth(date.getMonth() + 1, date.getFullYear()) + calendarOffset;
+    DaysInMonth(state.focusDate.getMonth() + 1, state.focusDate.getFullYear()) +
+      calendarOffset;
     index += 7
   ) {
-    anchors.push(new Date(date.getFullYear(), date.getMonth(), index));
+    anchors.push(
+      new Date(state.focusDate.getFullYear(), state.focusDate.getMonth(), index)
+    );
   }
 
   return (
-    <div>
+    <div className={styles.monthView}>
       <table>
         <thead>
           <tr>
-            <th colSpan={7}>
-              <DatePickerTitle text={monthName} />
-            </th>
+            <DatePickerHeader
+              text={`${monthName} ${state.focusDate.getFullYear()}`}
+              titleClick={yearView}
+              previousClick={() => {
+                changeMonth(-1);
+              }}
+              nextClick={() => {
+                changeMonth(1);
+              }}
+            />
           </tr>
           <tr>
-            <th>M</th>
-            <th>T</th>
-            <th>W</th>
-            <th>T</th>
-            <th>F</th>
-            <th>S</th>
-            <th>S</th>
+            <th>Su</th>
+            <th>Mo</th>
+            <th>Tu</th>
+            <th>We</th>
+            <th>Th</th>
+            <th>Fr</th>
+            <th>Sa</th>
           </tr>
         </thead>
         <tbody>
@@ -52,12 +97,11 @@ export default function MonthView({
             return (
               <tr key={index}>
                 <GenerateRow
-                  day={date}
+                  activeDay={state.selectedDate}
+                  focusDate={state.focusDate}
                   anchorDate={anchorDate}
                   offset={calendarOffset}
-                  onClick={(_, date) => {
-                    console.log(date.toDateString());
-                  }}
+                  onClick={selectDate}
                 />
               </tr>
             );
@@ -74,19 +118,19 @@ export default function MonthView({
  * @returns
  */
 const GenerateRow = ({
-  day,
+  activeDay, // The selected day
+  focusDate,
   anchorDate,
   offset,
   onClick,
 }: {
-  day: Date;
+  activeDay: Date;
+  focusDate: Date;
   anchorDate: Date;
   offset: number;
-  onClick: (
-    event: React.MouseEvent<HTMLButtonElement, MouseEvent>,
-    date: Date
-  ) => void;
+  onClick: (date: Date) => void;
 }) => {
+  // For each day of the week, get the date based off the anchor date
   let days: Date[] = [];
   for (let dayOfWeek = 0; dayOfWeek < 7; dayOfWeek++) {
     let date = new Date(anchorDate);
@@ -97,19 +141,20 @@ const GenerateRow = ({
   return (
     <>
       {days.map((date, index) => {
-        const isActive = date.getDate() === day.getDate();
-        const isToday = IsToday(date);
+        const isOutOfMonth = date.getMonth() !== focusDate.getMonth();
+        const isActive = IsSameDate(date, activeDay);
+        const isToday = IsSameDate(date, new Date());
 
         return (
           <td
             key={index}
-            className={`${
-              date.getMonth() !== day.getMonth() ? styles.outOfMonth : ""
-            } ${isActive ? styles.active : ""} ${isToday ? styles.today : ""}`}
+            className={`${isOutOfMonth ? styles.outOfMonth : ""} ${
+              isActive ? styles.active : ""
+            } ${isToday ? styles.today : ""}`}
           >
             <button
-              onClick={(e) => {
-                onClick(e, date);
+              onClick={() => {
+                onClick(date);
               }}
             >
               {date.getDate()}
@@ -132,14 +177,14 @@ const DaysInMonth = (month: number, year: number): number => {
 };
 
 /**
- * Checks if the date is today, ignoring the time portion & timezones
- * @param date The date to compare
- * @returns If the date is today
+ * Checks if the dates are the same, ignoring the time and timezones
+ * @param a Date A
+ * @param b Date B
  */
-const IsToday = (date: Date): boolean => {
+const IsSameDate = (a: Date, b: Date): boolean => {
   return (
-    date.getDate() === new Date().getDate() &&
-    date.getMonth() === new Date().getMonth() &&
-    date.getFullYear() === new Date().getFullYear()
+    a.getDate() === b.getDate() &&
+    a.getMonth() === b.getMonth() &&
+    a.getFullYear() === b.getFullYear()
   );
 };

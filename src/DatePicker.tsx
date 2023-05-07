@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useReducer } from "react";
 import styles from "./DatePicker.module.scss";
 import {
   Calendar2Event,
@@ -7,29 +7,94 @@ import {
   Clock,
 } from "react-bootstrap-icons";
 import MonthView from "./DatePicker/MonthView";
+import YearView from "./DatePicker/YearView";
 
-enum States {
+export enum States {
   Date,
   Time,
 }
 
-enum Views {
+export enum Views {
   Month,
   Year,
-  Decade,
 }
 
-export default function DatePicker({ defaultValue }: { defaultValue?: Date }) {
-  const [state, setState] = useState<States>(States.Date);
-  const [view, setView] = useState<Views>(Views.Month);
-  const [date, setDate] = useState<Date>(defaultValue || new Date());
+export type DatePickerState = {
+  selectedDate: Date;
+  focusDate: Date;
+  view: Views;
+  state: States;
+};
 
-  const isDateView = state !== States.Time;
+export type DatePickerAction = {
+  type: "selectDate" | "setFocus" | "toggleState" | "monthView" | "yearView";
+  date?: Date;
+};
+
+const reducer = (
+  state: DatePickerState,
+  action: DatePickerAction
+): DatePickerState => {
+  switch (action.type) {
+    case "selectDate":
+      if (!action.date) {
+        throw new Error("Date picker action requires a date");
+      }
+      return {
+        selectedDate: action.date,
+        focusDate: action.date,
+        view: Views.Month,
+        state: States.Date,
+      };
+    case "setFocus":
+      if (!action.date) {
+        throw new Error("Date picker action requires a date");
+      }
+      return {
+        ...state,
+        focusDate: action.date,
+      };
+    case "toggleState":
+      return {
+        ...state,
+        state: state.state === States.Time ? States.Date : States.Time,
+      };
+    case "monthView":
+      if (!action.date) {
+        throw new Error("Date picker action requires a date");
+      }
+      return {
+        ...state,
+        focusDate: action.date,
+        view: Views.Month,
+      };
+    case "yearView":
+      return {
+        ...state,
+        view: Views.Year,
+      };
+    default:
+      throw new Error("Date picker action doesn't exist");
+  }
+};
+
+export default function DatePicker({ defaultValue }: { defaultValue?: Date }) {
+  const [state, dispatch] = useReducer(reducer, {
+    selectedDate: defaultValue || new Date(),
+    focusDate: defaultValue || new Date(),
+    view: Views.Month,
+    state: States.Date,
+  });
+
+  const isDateView = state.state === States.Date;
 
   let currentView;
-  switch (view) {
+  switch (state.view) {
     case Views.Month:
-      currentView = <MonthView date={date} setDate={setDate} />;
+      currentView = <MonthView state={state} dispatch={dispatch} />;
+      break;
+    case Views.Year:
+      currentView = <YearView state={state} dispatch={dispatch} />;
   }
 
   return (
@@ -47,21 +112,15 @@ export default function DatePicker({ defaultValue }: { defaultValue?: Date }) {
         <button
           className="btn"
           onClick={() => {
-            setState((state) => {
-              if (state === States.Time) {
-                setView(Views.Month);
-                return States.Date;
-              }
-              return States.Time;
-            });
+            dispatch({ type: "toggleState" });
           }}
         >
-          {state == States.Time ? <Calendar2Event /> : <Clock />}
+          {isDateView ? <Clock /> : <Calendar2Event />}
         </button>
       </div>
       <div
         className={`${styles.sectionContainer} ${
-          state === States.Time ? styles.expand : ""
+          !isDateView ? styles.expand : ""
         }`}
       >
         <div className={styles.timeSection}>
@@ -74,16 +133,36 @@ export default function DatePicker({ defaultValue }: { defaultValue?: Date }) {
   );
 }
 
-export const DatePickerTitle = ({ text }: { text: string }) => {
+export const DatePickerHeader = ({
+  text,
+  titleClick,
+  previousClick,
+  nextClick,
+}: {
+  text: string;
+  titleClick?: () => void;
+  previousClick?: () => void;
+  nextClick?: () => void;
+}) => {
+  const title = titleClick ? (
+    <button className={styles.title} onClick={titleClick}>
+      {text}
+    </button>
+  ) : (
+    <p className={styles.title}>{text}</p>
+  );
+
   return (
-    <div className={styles.tableTitle}>
-      <button className={styles.icon}>
-        <ChevronLeft />
-      </button>
-      <button className={styles.title}>{text}</button>
-      <button className={styles.icon}>
-        <ChevronRight />
-      </button>
-    </div>
+    <th colSpan={7}>
+      <div className={styles.header}>
+        <button className={styles.icon} onClick={previousClick}>
+          <ChevronLeft />
+        </button>
+        {title}
+        <button className={styles.icon} onClick={nextClick}>
+          <ChevronRight />
+        </button>
+      </div>
+    </th>
   );
 };
