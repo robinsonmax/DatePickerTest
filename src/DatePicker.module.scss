@@ -2,7 +2,28 @@
   background: white;
   color: black;
   width: 250px;
-  min-height: 150px;
   border-radius: 0.5rem;
   box-shadow: 0 0.5rem 1rem rgba(0 0 0 / 16%);
+}
+
+.sectionContainer {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.3s;
+
+  &.expand {
+    grid-template-rows: 1fr;
+  }
+}
+
+.section {
+  overflow: hidden;
+}
+
+.switch {
+  padding: 1rem;
+
+  button {
+    width: 100%;
+  }
 }
