@@ -44,20 +44,21 @@ export default function MonthView({
     state.focusDate.getMonth(),
     1
   );
-  const calendarOffset = firstDayOfMonth.getDay();
 
-  // A list of days at 1 week intervals, starting from the 1st of the month
-  // 1st, 8th, 15th, 22nd, 29th
+  // Doing this maths for Februaries that start on a Sunday (e.g. Feb 2026)
+  // (so they have a row before and after, instead of 2 rows after)
+  const calendarOffset = (firstDayOfMonth.getDay() + 6) % 7;
+
+  // A list of days at 1 week intervals, starting from the last day of the previous month
+  // 0th, 7th, 14th, 21st, 28th, 35th
   let anchors: Date[] = [];
-  for (
-    let index = 1;
-    index <=
-    DaysInMonth(state.focusDate.getMonth() + 1, state.focusDate.getFullYear()) +
-      calendarOffset;
-    index += 7
-  ) {
+  for (let index = 0; index <= 5; index++) {
     anchors.push(
-      new Date(state.focusDate.getFullYear(), state.focusDate.getMonth(), index)
+      new Date(
+        state.focusDate.getFullYear(),
+        state.focusDate.getMonth(),
+        index * 7
+      )
     );
   }
 
@@ -159,16 +160,6 @@ const GenerateRow = ({
       })}
     </>
   );
-};
-
-/**
- * Gets the number of days in a month
- * @param month the month (0-11)
- * @param year the year
- * @returns the number of days in that month
- */
-const DaysInMonth = (month: number, year: number): number => {
-  return new Date(year, month, 0).getDate();
 };
 
 /**
