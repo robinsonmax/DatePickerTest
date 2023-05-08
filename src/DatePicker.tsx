@@ -78,7 +78,13 @@ const reducer = (
   }
 };
 
-export default function DatePicker({ defaultValue }: { defaultValue?: Date }) {
+export default function DatePicker({
+  defaultValue,
+  onChange,
+}: {
+  defaultValue?: Date;
+  onChange?: (date: Date) => any;
+}) {
   const [state, dispatch] = useReducer(reducer, {
     selectedDate: defaultValue || new Date(),
     focusDate: defaultValue || new Date(),
@@ -86,12 +92,23 @@ export default function DatePicker({ defaultValue }: { defaultValue?: Date }) {
     state: States.Date,
   });
 
+  const selectDate = (date: Date) => {
+    dispatch({
+      type: "selectDate",
+      date: date,
+    });
+
+    onChange && onChange(date);
+  };
+
   const isDateView = state.state === States.Date;
 
   let currentView;
   switch (state.view) {
     case Views.Month:
-      currentView = <MonthView state={state} dispatch={dispatch} />;
+      currentView = (
+        <MonthView state={state} dispatch={dispatch} selectDate={selectDate} />
+      );
       break;
     case Views.Year:
       currentView = <YearView state={state} dispatch={dispatch} />;

@@ -10,9 +10,11 @@ import styles from "../DatePicker.module.scss";
 export default function MonthView({
   state,
   dispatch,
+  selectDate,
 }: {
   state: DatePickerState;
   dispatch: Dispatch<DatePickerAction>;
+  selectDate: (date: Date) => void;
 }) {
   const locale = useContext(LocaleContext);
 
@@ -30,13 +32,6 @@ export default function MonthView({
         state.focusDate.getMonth() + increment,
         1
       ),
-    });
-  };
-
-  const selectDate = (date: Date) => {
-    dispatch({
-      type: "selectDate",
-      date: date,
     });
   };
 
