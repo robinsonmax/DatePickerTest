@@ -1,10 +1,6 @@
 import { Dispatch } from "react";
-import {
-  DatePickerAction,
-  DatePickerHeader,
-  DatePickerState,
-} from "../DatePicker";
-import styles from "../DatePicker.module.scss";
+import { DatePickerAction, DatePickerState } from "../DatePicker";
+import DatePickerGrid from "./3x4 Grid";
 
 export default function MonthView({
   state,
@@ -19,7 +15,7 @@ export default function MonthView({
     });
   };
 
-  const changeYear = (increment: number) => {
+  const changeYear = (increment: 1 | -1) => {
     dispatch({
       type: "setFocus",
       date: new Date(
@@ -30,6 +26,18 @@ export default function MonthView({
     });
   };
 
+  const isActive = (index: number) =>
+    index === state.selectedDate.getMonth() &&
+    state.selectedDate.getFullYear() === state.focusDate.getFullYear();
+
+  const monthName = (index: number) =>
+    new Date(state.focusDate.getFullYear(), index, 1).toLocaleString(
+      state.locale.toString(),
+      {
+        month: "short",
+      }
+    );
+
   const dayView = (month: number) => {
     dispatch({
       type: "dayView",
@@ -38,56 +46,13 @@ export default function MonthView({
   };
 
   return (
-    <div className={styles.yearView}>
-      <table>
-        <thead>
-          <tr>
-            <DatePickerHeader
-              text={state.focusDate.getFullYear().toString()}
-              titleClick={yearView}
-              previousClick={() => {
-                changeYear(-1);
-              }}
-              nextClick={() => {
-                changeYear(1);
-              }}
-            />
-          </tr>
-        </thead>
-        <tbody>
-          {[...Array(4)].map((_, row) => (
-            <tr key={row}>
-              {[...Array(3)].map((_, col) => {
-                const month = row * 3 + col;
-                const isActive =
-                  month === state.selectedDate.getMonth() &&
-                  state.selectedDate.getFullYear() ===
-                    state.focusDate.getFullYear();
-
-                const monthName = new Date(
-                  state.focusDate.getFullYear(),
-                  month,
-                  1
-                ).toLocaleString(state.locale.toString(), {
-                  month: "short",
-                });
-
-                return (
-                  <td key={col} className={isActive ? styles.active : ""}>
-                    <button
-                      onClick={() => {
-                        dayView(month);
-                      }}
-                    >
-                      {monthName}
-                    </button>
-                  </td>
-                );
-              })}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <DatePickerGrid
+      title={state.focusDate.getFullYear().toString()}
+      titleClick={yearView}
+      changeYear={changeYear}
+      isActive={isActive}
+      itemName={monthName}
+      itemClick={dayView}
+    />
   );
 }

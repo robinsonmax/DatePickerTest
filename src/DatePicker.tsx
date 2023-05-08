@@ -1,11 +1,6 @@
 import { useContext, useReducer } from "react";
 import styles from "./DatePicker.module.scss";
-import {
-  Calendar2Event,
-  ChevronLeft,
-  ChevronRight,
-  Clock,
-} from "react-bootstrap-icons";
+import { Calendar2Event, Clock } from "react-bootstrap-icons";
 import DayView from "./DatePicker/DayView";
 import YearView from "./DatePicker/YearView";
 import MonthView from "./DatePicker/MonthView";
@@ -169,37 +164,3 @@ export default function DatePicker({
     </div>
   );
 }
-
-export const DatePickerHeader = ({
-  text,
-  titleClick,
-  previousClick,
-  nextClick,
-}: {
-  text: string;
-  titleClick?: () => void;
-  previousClick?: () => void;
-  nextClick?: () => void;
-}) => {
-  const title = titleClick ? (
-    <button className={styles.title} onClick={titleClick}>
-      {text}
-    </button>
-  ) : (
-    <p className={styles.title}>{text}</p>
-  );
-
-  return (
-    <th colSpan={7}>
-      <div className={styles.header}>
-        <button className={styles.icon} onClick={previousClick}>
-          <ChevronLeft />
-        </button>
-        {title}
-        <button className={styles.icon} onClick={nextClick}>
-          <ChevronRight />
-        </button>
-      </div>
-    </th>
-  );
-};

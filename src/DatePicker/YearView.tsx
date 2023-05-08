@@ -1,10 +1,6 @@
 import { Dispatch } from "react";
-import {
-  DatePickerAction,
-  DatePickerHeader,
-  DatePickerState,
-} from "../DatePicker";
-import styles from "../DatePicker.module.scss";
+import { DatePickerAction, DatePickerState } from "../DatePicker";
+import DatePickerGrid from "./3x4 Grid";
 
 export default function YearView({
   state,
@@ -13,16 +9,22 @@ export default function YearView({
   state: DatePickerState;
   dispatch: Dispatch<DatePickerAction>;
 }) {
-  const changeYear = (increment: number) => {
+  const firstYearOfDecade = Math.floor(state.focusDate.getFullYear() / 10) * 10;
+
+  const changeYear = (increment: 1 | -1) => {
     dispatch({
       type: "setFocus",
       date: new Date(
-        state.focusDate.getFullYear() + increment,
+        state.focusDate.getFullYear() + increment * 10,
         state.focusDate.getMonth(),
         1
       ),
     });
   };
+
+  const isActive = (year: number) => year === state.selectedDate.getFullYear();
+
+  const yearName = (year: number) => year.toString();
 
   const monthView = (year: number) => {
     const month =
@@ -36,59 +38,14 @@ export default function YearView({
     });
   };
 
-  const firstYearOfDecade = Math.floor(state.focusDate.getFullYear() / 10) * 10;
-
-  let rows: number[] = [];
-  for (let row = firstYearOfDecade; row < firstYearOfDecade + 10; row += 2) {
-    rows.push(row);
-  }
-
   return (
-    <div className={styles.yearView}>
-      <table>
-        <thead>
-          <tr>
-            <DatePickerHeader
-              text={`${firstYearOfDecade} - ${firstYearOfDecade + 9}`}
-              previousClick={() => {
-                changeYear(-10);
-              }}
-              nextClick={() => {
-                changeYear(10);
-              }}
-            />
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((year, index) => {
-            const evenYearActive = state.selectedDate.getFullYear() === year;
-            const oddYearActive = state.selectedDate.getFullYear() === year + 1;
-
-            return (
-              <tr key={index}>
-                <td className={evenYearActive ? styles.active : ""}>
-                  <button
-                    onClick={() => {
-                      monthView(year);
-                    }}
-                  >
-                    {year}
-                  </button>
-                </td>
-                <td className={oddYearActive ? styles.active : ""}>
-                  <button
-                    onClick={() => {
-                      monthView(year + 1);
-                    }}
-                  >
-                    {year + 1}
-                  </button>
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </div>
+    <DatePickerGrid
+      title={`${firstYearOfDecade} - ${firstYearOfDecade + 9}`}
+      changeYear={changeYear}
+      startingIndex={firstYearOfDecade - 1}
+      isActive={isActive}
+      itemName={yearName}
+      itemClick={monthView}
+    />
   );
 }

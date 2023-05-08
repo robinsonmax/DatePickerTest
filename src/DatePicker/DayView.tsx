@@ -1,10 +1,7 @@
 import { Dispatch } from "react";
-import {
-  DatePickerAction,
-  DatePickerHeader,
-  DatePickerState,
-} from "../DatePicker";
+import { DatePickerAction, DatePickerState } from "../DatePicker";
 import styles from "../DatePicker.module.scss";
+import DatePickerHeader from "./Header";
 
 export default function DayView({
   state,
@@ -60,7 +57,7 @@ export default function DayView({
   }
 
   return (
-    <div className={styles.monthView}>
+    <div className={styles.dayView}>
       <table>
         <thead>
           <tr>
