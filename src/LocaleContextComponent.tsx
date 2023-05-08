@@ -1,8 +1,9 @@
 import { createContext, useState } from "react";
 
 enum Locales {
-  English = "en-gb",
-  IncorrectEnglish = "en-us",
+  English = "en-GB",
+  IncorrectEnglish = "en-US",
+  German = "de-DE",
 }
 
 export const LocaleContext = createContext<Locales>(Locales.English);

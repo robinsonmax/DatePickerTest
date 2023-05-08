@@ -1,176 +1,93 @@
-import { Dispatch, useContext } from "react";
+import { Dispatch } from "react";
 import {
   DatePickerAction,
   DatePickerHeader,
   DatePickerState,
 } from "../DatePicker";
-import { LocaleContext } from "../LocaleContextComponent";
 import styles from "../DatePicker.module.scss";
 
 export default function MonthView({
   state,
   dispatch,
-  selectDate,
 }: {
   state: DatePickerState;
   dispatch: Dispatch<DatePickerAction>;
-  selectDate: (date: Date) => void;
 }) {
-  const locale = useContext(LocaleContext);
-
   const yearView = () => {
     dispatch({
       type: "yearView",
     });
   };
 
-  const changeMonth = (increment: number) => {
+  const changeYear = (increment: number) => {
     dispatch({
       type: "setFocus",
       date: new Date(
-        state.focusDate.getFullYear(),
-        state.focusDate.getMonth() + increment,
+        state.focusDate.getFullYear() + increment,
+        state.focusDate.getMonth(),
         1
       ),
     });
   };
 
-  const monthName = state.focusDate.toLocaleString(locale.toString(), {
-    month: "long",
-  });
-
-  const firstDayOfMonth = new Date(
-    state.focusDate.getFullYear(),
-    state.focusDate.getMonth(),
-    1
-  );
-
-  // Doing this maths for Februaries that start on a Sunday (e.g. Feb 2026)
-  // (so they have a row before and after, instead of 2 rows after)
-  const calendarOffset = (firstDayOfMonth.getDay() + 6) % 7;
-
-  // A list of days at 1 week intervals, starting from the last day of the previous month
-  // 0th, 7th, 14th, 21st, 28th, 35th
-  let anchors: Date[] = [];
-  for (let index = 0; index <= 5; index++) {
-    anchors.push(
-      new Date(
-        state.focusDate.getFullYear(),
-        state.focusDate.getMonth(),
-        index * 7
-      )
-    );
-  }
+  const dayView = (month: number) => {
+    dispatch({
+      type: "dayView",
+      date: new Date(state.focusDate.getFullYear(), month, 1),
+    });
+  };
 
   return (
-    <div className={styles.monthView}>
+    <div className={styles.yearView}>
       <table>
         <thead>
           <tr>
             <DatePickerHeader
-              text={`${monthName} ${state.focusDate.getFullYear()}`}
+              text={state.focusDate.getFullYear().toString()}
               titleClick={yearView}
               previousClick={() => {
-                changeMonth(-1);
+                changeYear(-1);
               }}
               nextClick={() => {
-                changeMonth(1);
+                changeYear(1);
               }}
             />
           </tr>
-          <tr>
-            <th>Su</th>
-            <th>Mo</th>
-            <th>Tu</th>
-            <th>We</th>
-            <th>Th</th>
-            <th>Fr</th>
-            <th>Sa</th>
-          </tr>
         </thead>
         <tbody>
-          {anchors.map((anchorDate, index) => {
-            return (
-              <tr key={index}>
-                <GenerateRow
-                  activeDay={state.selectedDate}
-                  focusDate={state.focusDate}
-                  anchorDate={anchorDate}
-                  offset={calendarOffset}
-                  onClick={selectDate}
-                />
-              </tr>
-            );
-          })}
+          {[...Array(4)].map((_, row) => (
+            <tr key={row}>
+              {[...Array(3)].map((_, col) => {
+                const month = row * 3 + col;
+                const isActive =
+                  month === state.selectedDate.getMonth() &&
+                  state.selectedDate.getFullYear() ===
+                    state.focusDate.getFullYear();
+
+                const monthName = new Date(
+                  state.focusDate.getFullYear(),
+                  month,
+                  1
+                ).toLocaleString(state.locale.toString(), {
+                  month: "short",
+                });
+
+                return (
+                  <td key={col} className={isActive ? styles.active : ""}>
+                    <button
+                      onClick={() => {
+                        dayView(month);
+                      }}
+                    >
+                      {monthName}
+                    </button>
+                  </td>
+                );
+              })}
+            </tr>
+          ))}
         </tbody>
       </table>
     </div>
   );
 }
-
-/**
- * Generates a row of dates around the anchorDate
- * @param param0 Properties
- * @returns
- */
-const GenerateRow = ({
-  activeDay, // The selected day
-  focusDate,
-  anchorDate,
-  offset,
-  onClick,
-}: {
-  activeDay: Date;
-  focusDate: Date;
-  anchorDate: Date;
-  offset: number;
-  onClick: (date: Date) => void;
-}) => {
-  // For each day of the week, get the date based off the anchor date
-  let days: Date[] = [];
-  for (let dayOfWeek = 0; dayOfWeek < 7; dayOfWeek++) {
-    let date = new Date(anchorDate);
-    date.setDate(anchorDate.getDate() + dayOfWeek - offset);
-    days.push(date);
-  }
-
-  return (
-    <>
-      {days.map((date, index) => {
-        const isOutOfMonth = date.getMonth() !== focusDate.getMonth();
-        const isActive = IsSameDate(date, activeDay);
-        const isToday = IsSameDate(date, new Date());
-
-        return (
-          <td
-            key={index}
-            className={`${isOutOfMonth ? styles.outOfMonth : ""} ${
-              isActive ? styles.active : ""
-            } ${isToday ? styles.today : ""}`}
-          >
-            <button
-              onClick={() => {
-                onClick(date);
-              }}
-            >
-              {date.getDate()}
-            </button>
-          </td>
-        );
-      })}
-    </>
-  );
-};
-
-/**
- * Checks if the dates are the same, ignoring the time and timezones
- * @param a Date A
- * @param b Date B
- */
-const IsSameDate = (a: Date, b: Date): boolean => {
-  return (
-    a.getDate() === b.getDate() &&
-    a.getMonth() === b.getMonth() &&
-    a.getFullYear() === b.getFullYear()
-  );
-};

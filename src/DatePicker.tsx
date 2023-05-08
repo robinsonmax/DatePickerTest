@@ -1,4 +1,4 @@
-import { useReducer } from "react";
+import { useContext, useReducer } from "react";
 import styles from "./DatePicker.module.scss";
 import {
   Calendar2Event,
@@ -6,8 +6,10 @@ import {
   ChevronRight,
   Clock,
 } from "react-bootstrap-icons";
-import MonthView from "./DatePicker/MonthView";
+import DayView from "./DatePicker/DayView";
 import YearView from "./DatePicker/YearView";
+import MonthView from "./DatePicker/MonthView";
+import { LocaleContext } from "./LocaleContextComponent";
 
 export enum States {
   Date,
@@ -15,6 +17,7 @@ export enum States {
 }
 
 export enum Views {
+  Day,
   Month,
   Year,
 }
@@ -24,10 +27,17 @@ export type DatePickerState = {
   focusDate: Date;
   view: Views;
   state: States;
+  locale: string;
 };
 
 export type DatePickerAction = {
-  type: "selectDate" | "setFocus" | "toggleState" | "monthView" | "yearView";
+  type:
+    | "selectDate"
+    | "setFocus"
+    | "toggleState"
+    | "dayView"
+    | "monthView"
+    | "yearView";
   date?: Date;
 };
 
@@ -41,9 +51,10 @@ const reducer = (
         throw new Error("Date picker action requires a date");
       }
       return {
+        ...state,
         selectedDate: action.date,
         focusDate: action.date,
-        view: Views.Month,
+        view: Views.Day,
         state: States.Date,
       };
     case "setFocus":
@@ -59,13 +70,16 @@ const reducer = (
         ...state,
         state: state.state === States.Time ? States.Date : States.Time,
       };
-    case "monthView":
-      if (!action.date) {
-        throw new Error("Date picker action requires a date");
-      }
+    case "dayView":
       return {
         ...state,
-        focusDate: action.date,
+        focusDate: action.date || state.focusDate,
+        view: Views.Day,
+      };
+    case "monthView":
+      return {
+        ...state,
+        focusDate: action.date || state.focusDate,
         view: Views.Month,
       };
     case "yearView":
@@ -85,11 +99,14 @@ export default function DatePicker({
   defaultValue?: Date;
   onChange?: (date: Date) => any;
 }) {
+  const locale = useContext(LocaleContext);
+
   const [state, dispatch] = useReducer(reducer, {
     selectedDate: defaultValue || new Date(),
     focusDate: defaultValue || new Date(),
-    view: Views.Month,
+    view: Views.Day,
     state: States.Date,
+    locale: locale,
   });
 
   const selectDate = (date: Date) => {
@@ -105,10 +122,13 @@ export default function DatePicker({
 
   let currentView;
   switch (state.view) {
-    case Views.Month:
+    case Views.Day:
       currentView = (
-        <MonthView state={state} dispatch={dispatch} selectDate={selectDate} />
+        <DayView state={state} dispatch={dispatch} selectDate={selectDate} />
       );
+      break;
+    case Views.Month:
+      currentView = <MonthView state={state} dispatch={dispatch} />;
       break;
     case Views.Year:
       currentView = <YearView state={state} dispatch={dispatch} />;
